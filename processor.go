@@ -1,4 +1,18 @@
-package processorname
+// Copyright © 2024 Meroxa, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package cohere
 
 import (
 	"context"
@@ -18,11 +32,17 @@ type Processor struct {
 	config ProcessorConfig
 }
 
+const (
+	CommandModel = "command"
+	EmbedModel   = "embed"
+	RerankModel  = "rerank"
+)
+
 type ProcessorConfig struct {
-	// Field is the target field that will be set.
-	Field string `json:"field" validate:"required,exclusion=.Position"`
-	// Threshold is the threshold for filtering the record.
-	Threshold int `json:"threshold" validate:"required,gt=0"`
+	// Model is one of the Cohere model (command,embed,rerank)
+	Model string `json:"model" validate:"required"`
+	// APIKey is apikey for Cohere api calls.
+	APIKey string `json:"apiKey" validate:"required"`
 }
 
 func NewProcessor() sdk.Processor {
@@ -41,11 +61,11 @@ func (p *Processor) Configure(ctx context.Context, cfg config.Config) error {
 		return fmt.Errorf("failed to parse configuration: %w", err)
 	}
 
-	resolver, err := sdk.NewReferenceResolver(p.config.Field)
-	if err != nil {
-		return fmt.Errorf("failed to parse the %q param: %w", "field", err)
-	}
-	p.referenceResolver = resolver
+	// resolver, err := sdk.NewReferenceResolver(p.config.Field)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to parse the %q param: %w", "field", err)
+	// }
+	// p.referenceResolver = resolver
 	return nil
 }
 
@@ -55,11 +75,11 @@ func (p *Processor) Specification() (sdk.Specification, error) {
 	// parameters it expects.
 
 	return sdk.Specification{
-		Name:        "processorname",
-		Summary:     "<describe your processor>",
-		Description: "<describe your processor in detail>",
+		Name:        "conduit-processor-cohere",
+		Summary:     "Conduit processor for Cohere's models.",
+		Description: "Conduit processor for Cohere's models Command, Embed and Rerank.",
 		Version:     "devel",
-		Author:      "<your name>",
+		Author:      "Conduit",
 		Parameters:  p.config.Parameters(),
 	}, nil
 }

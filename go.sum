@@ -130,6 +130,8 @@ github.com/conduitio/conduit-commons v0.5.1 h1:o6Lh3LhBuorDfVVlWyj3tYoYbBUUPTMiJ
 github.com/conduitio/conduit-commons v0.5.1/go.mod h1:FmJI9zOxX+HDiqculivPmekaUASZdubOJnI8sOOLAXk=
 github.com/conduitio/conduit-processor-sdk v0.4.1 h1:u1K2JGC02/EHh9StUQxu0umVUqtTN3JhfMTBKhhB1dA=
 github.com/conduitio/conduit-processor-sdk v0.4.1/go.mod h1:ul2G08Oo9dD+jrehYa5hY+L4CAB1L/HkBmne24Ql5ec=
+github.com/conduitio/conduit-processor-template v0.0.0-20250205063826-de55a9cd9140 h1:52F5oWhZzx/ewl+AydtkTVc0J+dkEeTqtwenCF8pTFE=
+github.com/conduitio/conduit-processor-template v0.0.0-20250205063826-de55a9cd9140/go.mod h1:End9lprC/k9IPIutYE2RQ1ce2tUpVv0upk2oTjsPm8A=
 github.com/containerd/cgroups/v3 v3.0.5 h1:44na7Ud+VwyE7LIoJ8JTNQOa549a8543BmzaJHo6Bzo=
 github.com/containerd/cgroups/v3 v3.0.5/go.mod h1:SA5DLYnXO8pTGYiAHXz94qvLQTKfVM5GEVisn4jpins=
 github.com/containerd/containerd v1.7.25 h1:khEQOAXOEJalRO228yzVsuASLH42vT7DIo9Ss+9SMFQ=

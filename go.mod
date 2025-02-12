@@ -1,9 +1,13 @@
-module github.com/conduitio/conduit-processor-template
+module github.com/conduitio-labs/conduit-processor-cohere
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.3
+
 require (
 	github.com/conduitio/conduit-commons v0.5.1
 	github.com/conduitio/conduit-processor-sdk v0.4.1
+	github.com/conduitio/conduit-processor-template v0.0.0-20250205063826-de55a9cd9140
 	github.com/golangci/golangci-lint v1.64.2
 	mvdan.cc/gofumpt v0.7.0
 )
