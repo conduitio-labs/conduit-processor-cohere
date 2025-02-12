@@ -23,8 +23,8 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 			},
 		},
 		ProcessorConfigModel: {
-			Default:     "",
-			Description: "Model is one of the Cohere model (command,embed,rerank)",
+			Default:     "command",
+			Description: "Model is one of the Cohere model (command,embed,rerank).",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{
 				config.ValidationRequired{},

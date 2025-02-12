@@ -8,7 +8,8 @@ Conduit processor for Cohere's models.
 
 | name                     | description                              | required | default value |
 |--------------------------|------------------------------------------|----------|---------------|
-| `processor_config_param` | Description of `processor_config_param`. | true     | ""            |
+| `model` | Model is one of the Cohere model (command,embed,rerank) | true     | "command"            |
+| `apiKey` | APIKey is apikey for Cohere api calls. | true     |             |
 
 
 ## References

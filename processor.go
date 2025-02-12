@@ -27,6 +27,8 @@ import (
 
 type Processor struct {
 	sdk.UnimplementedProcessor
+
+	//nolint:unused // todo.
 	referenceResolver sdk.ReferenceResolver
 
 	config ProcessorConfig
@@ -39,8 +41,8 @@ const (
 )
 
 type ProcessorConfig struct {
-	// Model is one of the Cohere model (command,embed,rerank)
-	Model string `json:"model" validate:"required"`
+	// Model is one of the Cohere model (command,embed,rerank).
+	Model string `json:"model" validate:"required" default:"command"`
 	// APIKey is apikey for Cohere api calls.
 	APIKey string `json:"apiKey" validate:"required"`
 }
