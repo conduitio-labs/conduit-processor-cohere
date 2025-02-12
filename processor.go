@@ -43,7 +43,7 @@ const (
 type ProcessorConfig struct {
 	// Model is one of the Cohere model (command,embed,rerank).
 	Model string `json:"model" validate:"required" default:"command"`
-	// APIKey is apikey for Cohere api calls.
+	// APIKey is the API key for Cohere api calls.
 	APIKey string `json:"apiKey" validate:"required"`
 }
 
@@ -86,12 +86,41 @@ func (p *Processor) Specification() (sdk.Specification, error) {
 	}, nil
 }
 
-func (p *Processor) Process(_ context.Context, _ []opencdc.Record) []sdk.ProcessedRecord {
+func (p *Processor) Process(ctx context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
 	// Process is the main show of the processor, here we would manipulate the records received
 	// and return the processed ones. After processing the slice of records that the function
 	// got, and if no errors occurred, it should return a slice of sdk.ProcessedRecord that
 	// matches the length of the input slice. However, if an error occurred while processing a
 	// specific record, then it should be reflected in the ProcessedRecord with the same index
 	// as the input record, and should return the slice at that index length.
-	return make([]sdk.ProcessedRecord, 0)
+
+	processedRecords := []sdk.ProcessedRecord{}
+	var err error
+	switch p.config.Model {
+	case CommandModel:
+		processedRecords, err = p.processCommandModel(ctx, records)
+		if err != nil {
+			// log
+			return nil
+		}
+
+	case EmbedModel:
+		processedRecords, err = p.processEmbedModel(ctx, records)
+		if err != nil {
+			// log
+			return nil
+		}
+
+	case RerankModel:
+		processedRecords, err = p.processRerankModel(ctx, records)
+		if err != nil {
+			// log
+			return nil
+		}
+
+	default:
+		sdk.Logger(ctx).Err(err).Msg("invalid cohere model")
+	}
+
+	return processedRecords
 }

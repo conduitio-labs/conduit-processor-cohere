@@ -16,7 +16,7 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 	return map[string]config.Parameter{
 		ProcessorConfigApiKey: {
 			Default:     "",
-			Description: "APIKey is apikey for Cohere api calls.",
+			Description: "APIKey is the API key for Cohere api calls.",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{
 				config.ValidationRequired{},
