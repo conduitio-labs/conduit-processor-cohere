@@ -17,10 +17,10 @@
 package main
 
 import (
+	cohere "github.com/conduitio-labs/conduit-processor-cohere"
 	sdk "github.com/conduitio/conduit-processor-sdk"
-	processorname "github.com/conduitio/conduit-processor-template"
 )
 
 func main() {
-	sdk.Run(processorname.NewProcessor())
+	sdk.Run(cohere.NewProcessor())
 }
