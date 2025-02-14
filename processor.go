@@ -1,9 +1,24 @@
-package processorname
+// Copyright © 2024 Meroxa, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package cohere
 
 import (
 	"context"
 	"fmt"
 
+	cohereClient "github.com/cohere-ai/cohere-go/v2/client"
 	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
@@ -13,16 +28,26 @@ import (
 
 type Processor struct {
 	sdk.UnimplementedProcessor
-	referenceResolver sdk.ReferenceResolver
+
+	referenceResolver *sdk.ReferenceResolver
 
 	config ProcessorConfig
+	client *cohereClient.Client
 }
 
+const (
+	CommandModel = "command"
+	EmbedModel   = "embed"
+	RerankModel  = "rerank"
+)
+
 type ProcessorConfig struct {
-	// Field is the target field that will be set.
-	Field string `json:"field" validate:"required,exclusion=.Position"`
-	// Threshold is the threshold for filtering the record.
-	Threshold int `json:"threshold" validate:"required,gt=0"`
+	// Model is one of the Cohere model (command,embed,rerank).
+	Model string `json:"model" validate:"required" default:"command"`
+	// ModelVersion is version of one of the models (command,embed,rerank).
+	ModelVersion string `json:"modelVersion" validate:"required" default:"command"`
+	// APIKey is the API key for Cohere api calls.
+	APIKey string `json:"apiKey" validate:"required"`
 }
 
 func NewProcessor() sdk.Processor {
@@ -41,11 +66,15 @@ func (p *Processor) Configure(ctx context.Context, cfg config.Config) error {
 		return fmt.Errorf("failed to parse configuration: %w", err)
 	}
 
-	resolver, err := sdk.NewReferenceResolver(p.config.Field)
-	if err != nil {
-		return fmt.Errorf("failed to parse the %q param: %w", "field", err)
-	}
-	p.referenceResolver = resolver
+	// resolver, err := sdk.NewReferenceResolver(p.config.Field)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to parse the %q param: %w", "field", err)
+	// }
+	// p.referenceResolver = resolver
+
+	// new cohere client
+	p.client = cohereClient.NewClient()
+
 	return nil
 }
 
@@ -55,21 +84,37 @@ func (p *Processor) Specification() (sdk.Specification, error) {
 	// parameters it expects.
 
 	return sdk.Specification{
-		Name:        "processorname",
-		Summary:     "<describe your processor>",
-		Description: "<describe your processor in detail>",
+		Name:        "conduit-processor-cohere",
+		Summary:     "Conduit processor for Cohere's models.",
+		Description: "Conduit processor for Cohere's models Command, Embed and Rerank.",
 		Version:     "devel",
-		Author:      "<your name>",
+		Author:      "Conduit",
 		Parameters:  p.config.Parameters(),
 	}, nil
 }
 
-func (p *Processor) Process(_ context.Context, _ []opencdc.Record) []sdk.ProcessedRecord {
+func (p *Processor) Process(ctx context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
 	// Process is the main show of the processor, here we would manipulate the records received
 	// and return the processed ones. After processing the slice of records that the function
 	// got, and if no errors occurred, it should return a slice of sdk.ProcessedRecord that
 	// matches the length of the input slice. However, if an error occurred while processing a
 	// specific record, then it should be reflected in the ProcessedRecord with the same index
 	// as the input record, and should return the slice at that index length.
-	return make([]sdk.ProcessedRecord, 0)
+
+	processedRecords := []sdk.ProcessedRecord{}
+	switch p.config.Model {
+	case CommandModel:
+		processedRecords = p.processCommandModel(ctx, records)
+
+	case EmbedModel:
+		processedRecords = p.processEmbedModel(ctx, records)
+
+	case RerankModel:
+		processedRecords = p.processRerankModel(ctx, records)
+
+	default:
+		sdk.Logger(ctx).Info().Msg("unknown cohere model")
+	}
+
+	return processedRecords
 }

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build wasm
-
-package main
+package cohere
 
 import (
-	cohere "github.com/conduitio-labs/conduit-processor-cohere"
+	"context"
+
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
 )
 
-func main() {
-	sdk.Run(cohere.NewProcessor())
+func (p *Processor) processEmbedModel(_ context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
+	return make([]sdk.ProcessedRecord, len(records))
 }
