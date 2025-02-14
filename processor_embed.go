@@ -22,6 +22,6 @@ import (
 )
 
 //nolint:unparam // todo handle error.
-func (p *Processor) processEmbedModel(_ context.Context, records []opencdc.Record) ([]sdk.ProcessedRecord, error) {
-	return make([]sdk.ProcessedRecord, len(records)), nil
+func (p *Processor) processEmbedModel(_ context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
+	return make([]sdk.ProcessedRecord, len(records))
 }

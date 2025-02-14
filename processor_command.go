@@ -16,12 +16,56 @@ package cohere
 
 import (
 	"context"
+	"fmt"
 
+	cohere "github.com/cohere-ai/cohere-go/v2"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
 )
 
-//nolint:unparam // todo handle error.
-func (p *Processor) processCommandModel(_ context.Context, records []opencdc.Record) ([]sdk.ProcessedRecord, error) {
-	return make([]sdk.ProcessedRecord, len(records)), nil
+func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
+	out := make([]sdk.ProcessedRecord, 0, len(records))
+	for _, record := range records {
+		resp, err := p.client.V2.Chat(
+			ctx,
+			&cohere.V2ChatRequest{
+				Model: p.config.ModelVersion,
+				Messages: cohere.ChatMessages{
+					{
+						Role: "user",
+						User: &cohere.UserMessage{},
+					},
+				},
+			},
+		)
+		if err != nil {
+			return append(out, sdk.ErrorRecord{Error: err})
+		}
+
+		err = p.setField(&record, p.referenceResolver, resp.String())
+		if err != nil {
+			return append(out, sdk.ErrorRecord{Error: fmt.Errorf("failed setting response body: %w", err)})
+		}
+
+		out = append(out, sdk.SingleRecord(record))
+	}
+	return out
+}
+
+func (p *Processor) setField(r *opencdc.Record, refRes *sdk.ReferenceResolver, data any) error {
+	if refRes == nil {
+		return nil
+	}
+
+	ref, err := refRes.Resolve(r)
+	if err != nil {
+		return err
+	}
+
+	err = ref.Set(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

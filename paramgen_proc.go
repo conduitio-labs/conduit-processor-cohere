@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	ProcessorConfigApiKey = "apiKey"
-	ProcessorConfigModel  = "model"
+	ProcessorConfigApiKey       = "apiKey"
+	ProcessorConfigModel        = "model"
+	ProcessorConfigModelVersion = "modelVersion"
 )
 
 func (ProcessorConfig) Parameters() map[string]config.Parameter {
@@ -25,6 +26,14 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 		ProcessorConfigModel: {
 			Default:     "command",
 			Description: "Model is one of the Cohere model (command,embed,rerank).",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{
+				config.ValidationRequired{},
+			},
+		},
+		ProcessorConfigModelVersion: {
+			Default:     "command",
+			Description: "ModelVersion is version of one of the models (command,embed,rerank).",
 			Type:        config.ParameterTypeString,
 			Validations: []config.Validation{
 				config.ValidationRequired{},

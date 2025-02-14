@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	cohereClient "github.com/cohere-ai/cohere-go/v2/client"
 	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
@@ -29,9 +30,10 @@ type Processor struct {
 	sdk.UnimplementedProcessor
 
 	//nolint:unused // todo.
-	referenceResolver sdk.ReferenceResolver
+	referenceResolver *sdk.ReferenceResolver
 
 	config ProcessorConfig
+	client *cohereClient.Client
 }
 
 const (
@@ -43,6 +45,8 @@ const (
 type ProcessorConfig struct {
 	// Model is one of the Cohere model (command,embed,rerank).
 	Model string `json:"model" validate:"required" default:"command"`
+	// ModelVersion is version of one of the models (command,embed,rerank).
+	ModelVersion string `json:"modelVersion" validate:"required" default:"command"`
 	// APIKey is the API key for Cohere api calls.
 	APIKey string `json:"apiKey" validate:"required"`
 }
@@ -68,6 +72,10 @@ func (p *Processor) Configure(ctx context.Context, cfg config.Config) error {
 	// 	return fmt.Errorf("failed to parse the %q param: %w", "field", err)
 	// }
 	// p.referenceResolver = resolver
+
+	// new cohere client
+	p.client = cohereClient.NewClient()
+
 	return nil
 }
 
@@ -98,25 +106,13 @@ func (p *Processor) Process(ctx context.Context, records []opencdc.Record) []sdk
 	var err error
 	switch p.config.Model {
 	case CommandModel:
-		processedRecords, err = p.processCommandModel(ctx, records)
-		if err != nil {
-			// log
-			return nil
-		}
+		processedRecords = p.processCommandModel(ctx, records)
 
 	case EmbedModel:
-		processedRecords, err = p.processEmbedModel(ctx, records)
-		if err != nil {
-			// log
-			return nil
-		}
+		processedRecords = p.processEmbedModel(ctx, records)
 
 	case RerankModel:
-		processedRecords, err = p.processRerankModel(ctx, records)
-		if err != nil {
-			// log
-			return nil
-		}
+		processedRecords = p.processRerankModel(ctx, records)
 
 	default:
 		sdk.Logger(ctx).Err(err).Msg("invalid cohere model")
