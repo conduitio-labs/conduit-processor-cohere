@@ -29,7 +29,6 @@ import (
 type Processor struct {
 	sdk.UnimplementedProcessor
 
-	//nolint:unused // todo.
 	referenceResolver *sdk.ReferenceResolver
 
 	config ProcessorConfig
@@ -103,7 +102,6 @@ func (p *Processor) Process(ctx context.Context, records []opencdc.Record) []sdk
 	// as the input record, and should return the slice at that index length.
 
 	processedRecords := []sdk.ProcessedRecord{}
-	var err error
 	switch p.config.Model {
 	case CommandModel:
 		processedRecords = p.processCommandModel(ctx, records)
@@ -115,7 +113,7 @@ func (p *Processor) Process(ctx context.Context, records []opencdc.Record) []sdk
 		processedRecords = p.processRerankModel(ctx, records)
 
 	default:
-		sdk.Logger(ctx).Err(err).Msg("invalid cohere model")
+		sdk.Logger(ctx).Info().Msg("unknown cohere model")
 	}
 
 	return processedRecords

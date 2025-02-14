@@ -33,7 +33,9 @@ func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.R
 				Messages: cohere.ChatMessages{
 					{
 						Role: "user",
-						User: &cohere.UserMessage{},
+						User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+							String: string(record.Payload.After.Bytes()),
+						}},
 					},
 				},
 			},
@@ -59,12 +61,12 @@ func (p *Processor) setField(r *opencdc.Record, refRes *sdk.ReferenceResolver, d
 
 	ref, err := refRes.Resolve(r)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reference resolver: %w", err)
 	}
 
 	err = ref.Set(data)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reference set: %w", err)
 	}
 
 	return nil
