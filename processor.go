@@ -31,7 +31,7 @@ import (
 type Processor struct {
 	sdk.UnimplementedProcessor
 
-	referenceResolver *sdk.ReferenceResolver
+	responseBodyRef *sdk.ReferenceResolver
 
 	config     ProcessorConfig
 	backoffCfg *backoff.Backoff
@@ -59,6 +59,8 @@ type ProcessorConfig struct {
 	BackoffRetryMin time.Duration `json:"backoffRetry.min" default:"100ms"`
 	// The maximum waiting time before retrying.
 	BackoffRetryMax time.Duration `json:"backoffRetry.max" default:"5s"`
+	// Specifies in which field should the response body be saved.
+	ResponseBodyRef string `json:"response.body" default:".Payload.After"`
 }
 
 func NewProcessor() sdk.Processor {
@@ -77,11 +79,11 @@ func (p *Processor) Configure(ctx context.Context, cfg config.Config) error {
 		return fmt.Errorf("failed to parse configuration: %w", err)
 	}
 
-	// resolver, err := sdk.NewReferenceResolver(p.config.Field)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to parse the %q param: %w", "field", err)
-	// }
-	// p.referenceResolver = resolver
+	responseBodyRef, err := sdk.NewReferenceResolver(p.config.ResponseBodyRef)
+	if err != nil {
+		return fmt.Errorf("failed parsing response.body %v: %w", p.config.ResponseBodyRef, err)
+	}
+	p.responseBodyRef = &responseBodyRef
 
 	// new cohere client
 	p.client = cohereClient.NewClient()

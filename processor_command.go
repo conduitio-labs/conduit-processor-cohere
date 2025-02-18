@@ -81,11 +81,10 @@ func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.R
 				return append(out, sdk.ErrorRecord{Error: err})
 			}
 
-			err = p.setField(&record, p.referenceResolver, resp.String())
+			err = p.setField(&record, p.responseBodyRef, resp.String())
 			if err != nil {
 				return append(out, sdk.ErrorRecord{Error: fmt.Errorf("failed setting response body: %w", err)})
 			}
-
 			out = append(out, sdk.SingleRecord(record))
 		}
 	}

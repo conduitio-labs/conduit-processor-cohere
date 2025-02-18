@@ -15,6 +15,7 @@ const (
 	ProcessorConfigBackoffRetryMin    = "backoffRetry.min"
 	ProcessorConfigModel              = "model"
 	ProcessorConfigModelVersion       = "modelVersion"
+	ProcessorConfigResponseBody       = "response.body"
 )
 
 func (ProcessorConfig) Parameters() map[string]config.Parameter {
@@ -70,6 +71,12 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 			Validations: []config.Validation{
 				config.ValidationRequired{},
 			},
+		},
+		ProcessorConfigResponseBody: {
+			Default:     ".Payload.After",
+			Description: "Specifies in which field should the response body be saved.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{},
 		},
 	}
 }
