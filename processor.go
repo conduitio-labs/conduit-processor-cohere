@@ -17,11 +17,13 @@ package cohere
 import (
 	"context"
 	"fmt"
+	"time"
 
 	cohereClient "github.com/cohere-ai/cohere-go/v2/client"
 	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
+	"github.com/jpillora/backoff"
 )
 
 //go:generate paramgen -output=paramgen_proc.go ProcessorConfig
@@ -31,8 +33,9 @@ type Processor struct {
 
 	referenceResolver *sdk.ReferenceResolver
 
-	config ProcessorConfig
-	client *cohereClient.Client
+	config     ProcessorConfig
+	backoffCfg *backoff.Backoff
+	client     *cohereClient.Client
 }
 
 const (
@@ -48,6 +51,14 @@ type ProcessorConfig struct {
 	ModelVersion string `json:"modelVersion" validate:"required" default:"command"`
 	// APIKey is the API key for Cohere api calls.
 	APIKey string `json:"apiKey" validate:"required"`
+	// Maximum number of retries for an individual record when backing off following an error.
+	BackoffRetryCount float64 `json:"backoffRetry.count" default:"0" validate:"gt=-1"`
+	// The multiplying factor for each increment step.
+	BackoffRetryFactor float64 `json:"backoffRetry.factor" default:"2" validate:"gt=0"`
+	// The minimum waiting time before retrying.
+	BackoffRetryMin time.Duration `json:"backoffRetry.min" default:"100ms"`
+	// The maximum waiting time before retrying.
+	BackoffRetryMax time.Duration `json:"backoffRetry.max" default:"5s"`
 }
 
 func NewProcessor() sdk.Processor {
@@ -74,6 +85,12 @@ func (p *Processor) Configure(ctx context.Context, cfg config.Config) error {
 
 	// new cohere client
 	p.client = cohereClient.NewClient()
+
+	p.backoffCfg = &backoff.Backoff{
+		Factor: p.config.BackoffRetryFactor,
+		Min:    p.config.BackoffRetryMin,
+		Max:    p.config.BackoffRetryMax,
+	}
 
 	return nil
 }

@@ -16,7 +16,9 @@ package cohere
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
 	"github.com/conduitio/conduit-commons/opencdc"
@@ -26,30 +28,66 @@ import (
 func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
 	out := make([]sdk.ProcessedRecord, 0, len(records))
 	for _, record := range records {
-		resp, err := p.client.V2.Chat(
-			ctx,
-			&cohere.V2ChatRequest{
-				Model: p.config.ModelVersion,
-				Messages: cohere.ChatMessages{
-					{
-						Role: "user",
-						User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
-							String: string(record.Payload.After.Bytes()),
-						}},
+		for {
+			resp, err := p.client.V2.Chat(
+				ctx,
+				&cohere.V2ChatRequest{
+					Model: p.config.ModelVersion,
+					Messages: cohere.ChatMessages{
+						{
+							Role: "user",
+							User: &cohere.UserMessage{Content: &cohere.UserMessageContent{
+								String: string(record.Payload.After.Bytes()),
+							}},
+						},
 					},
 				},
-			},
-		)
-		if err != nil {
-			return append(out, sdk.ErrorRecord{Error: err})
-		}
+			)
+			attempt := p.backoffCfg.Attempt()
+			duration := p.backoffCfg.Duration()
+			if err != nil {
+				switch {
+				case errors.As(err, &cohere.GatewayTimeoutError{}),
+					errors.As(err, &cohere.InternalServerError{}),
+					errors.As(err, &cohere.ServiceUnavailableError{}):
 
-		err = p.setField(&record, p.referenceResolver, resp.String())
-		if err != nil {
-			return append(out, sdk.ErrorRecord{Error: fmt.Errorf("failed setting response body: %w", err)})
-		}
+					if attempt < p.config.BackoffRetryCount {
+						sdk.Logger(ctx).Debug().
+							Err(err).
+							Float64("attempt", attempt).
+							Float64("backoffRetry.count", p.config.BackoffRetryCount).
+							Int64("backoffRetry.duration", duration.Milliseconds()).
+							Msg("retrying Cohere HTTP request")
 
-		out = append(out, sdk.SingleRecord(record))
+						select {
+						case <-ctx.Done():
+							return append(out, sdk.ErrorRecord{Error: ctx.Err()})
+						case <-time.After(duration):
+							continue
+						}
+					} else {
+						return append(out, sdk.ErrorRecord{Error: err})
+					}
+
+				default:
+					// BadRequestError, ClientClosedRequestError, ForbiddenError, InvalidTokenError,
+					// NotFoundError, NotImplementedError, TooManyRequestsError, UnauthorizedError, UnprocessableEntityError
+					return append(out, sdk.ErrorRecord{Error: err})
+				}
+			}
+
+			p.backoffCfg.Reset() // reset for next processor execution
+			if err != nil {
+				return append(out, sdk.ErrorRecord{Error: err})
+			}
+
+			err = p.setField(&record, p.referenceResolver, resp.String())
+			if err != nil {
+				return append(out, sdk.ErrorRecord{Error: fmt.Errorf("failed setting response body: %w", err)})
+			}
+
+			out = append(out, sdk.SingleRecord(record))
+		}
 	}
 	return out
 }

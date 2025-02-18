@@ -8,9 +8,13 @@ import (
 )
 
 const (
-	ProcessorConfigApiKey       = "apiKey"
-	ProcessorConfigModel        = "model"
-	ProcessorConfigModelVersion = "modelVersion"
+	ProcessorConfigApiKey             = "apiKey"
+	ProcessorConfigBackoffRetryCount  = "backoffRetry.count"
+	ProcessorConfigBackoffRetryFactor = "backoffRetry.factor"
+	ProcessorConfigBackoffRetryMax    = "backoffRetry.max"
+	ProcessorConfigBackoffRetryMin    = "backoffRetry.min"
+	ProcessorConfigModel              = "model"
+	ProcessorConfigModelVersion       = "modelVersion"
 )
 
 func (ProcessorConfig) Parameters() map[string]config.Parameter {
@@ -22,6 +26,34 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 			Validations: []config.Validation{
 				config.ValidationRequired{},
 			},
+		},
+		ProcessorConfigBackoffRetryCount: {
+			Default:     "0",
+			Description: "Maximum number of retries for an individual record when backing off following an error.",
+			Type:        config.ParameterTypeFloat,
+			Validations: []config.Validation{
+				config.ValidationGreaterThan{V: -1},
+			},
+		},
+		ProcessorConfigBackoffRetryFactor: {
+			Default:     "2",
+			Description: "The multiplying factor for each increment step.",
+			Type:        config.ParameterTypeFloat,
+			Validations: []config.Validation{
+				config.ValidationGreaterThan{V: 0},
+			},
+		},
+		ProcessorConfigBackoffRetryMax: {
+			Default:     "5s",
+			Description: "The maximum waiting time before retrying.",
+			Type:        config.ParameterTypeDuration,
+			Validations: []config.Validation{},
+		},
+		ProcessorConfigBackoffRetryMin: {
+			Default:     "100ms",
+			Description: "The minimum waiting time before retrying.",
+			Type:        config.ParameterTypeDuration,
+			Validations: []config.Validation{},
 		},
 		ProcessorConfigModel: {
 			Default:     "command",
