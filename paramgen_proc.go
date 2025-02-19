@@ -8,14 +8,17 @@ import (
 )
 
 const (
-	ProcessorConfigApiKey             = "apiKey"
-	ProcessorConfigBackoffRetryCount  = "backoffRetry.count"
-	ProcessorConfigBackoffRetryFactor = "backoffRetry.factor"
-	ProcessorConfigBackoffRetryMax    = "backoffRetry.max"
-	ProcessorConfigBackoffRetryMin    = "backoffRetry.min"
-	ProcessorConfigModel              = "model"
-	ProcessorConfigModelVersion       = "modelVersion"
-	ProcessorConfigResponseBody       = "response.body"
+	ProcessorConfigApiKey                    = "apiKey"
+	ProcessorConfigBackoffRetryCount         = "backoffRetry.count"
+	ProcessorConfigBackoffRetryFactor        = "backoffRetry.factor"
+	ProcessorConfigBackoffRetryMax           = "backoffRetry.max"
+	ProcessorConfigBackoffRetryMin           = "backoffRetry.min"
+	ProcessorConfigEmbedConfigEmbeddingTypes = "embedConfig.embeddingTypes"
+	ProcessorConfigEmbedConfigInputType      = "embedConfig.inputType"
+	ProcessorConfigEmbedConfigTruncate       = "embedConfig.truncate"
+	ProcessorConfigModel                     = "model"
+	ProcessorConfigModelVersion              = "modelVersion"
+	ProcessorConfigResponseBody              = "response.body"
 )
 
 func (ProcessorConfig) Parameters() map[string]config.Parameter {
@@ -55,6 +58,28 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 			Description: "The minimum waiting time before retrying.",
 			Type:        config.ParameterTypeDuration,
 			Validations: []config.Validation{},
+		},
+		ProcessorConfigEmbedConfigEmbeddingTypes: {
+			Default:     "",
+			Description: "Specifies the types of embeddings you want to get back. Can be one or more of the allowed types.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{},
+		},
+		ProcessorConfigEmbedConfigInputType: {
+			Default:     "",
+			Description: "Specifies the type of input passed to the model. Required for embedding models v3 and higher.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{
+				config.ValidationInclusion{List: []string{"search_document", "search_query", "classification", "clustering", "image"}},
+			},
+		},
+		ProcessorConfigEmbedConfigTruncate: {
+			Default:     "NONE",
+			Description: "Specifies how the API will handle inputs longer than the maximum token length.",
+			Type:        config.ParameterTypeString,
+			Validations: []config.Validation{
+				config.ValidationInclusion{List: []string{"NONE", "START", "END"}},
+			},
 		},
 		ProcessorConfigModel: {
 			Default:     "command",

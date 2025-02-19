@@ -90,21 +90,3 @@ func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.R
 	}
 	return out
 }
-
-func (p *Processor) setField(r *opencdc.Record, refRes *sdk.ReferenceResolver, data any) error {
-	if refRes == nil {
-		return nil
-	}
-
-	ref, err := refRes.Resolve(r)
-	if err != nil {
-		return fmt.Errorf("error reference resolver: %w", err)
-	}
-
-	err = ref.Set(data)
-	if err != nil {
-		return fmt.Errorf("error reference set: %w", err)
-	}
-
-	return nil
-}

@@ -17,6 +17,7 @@ package cohere
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	cohereClient "github.com/cohere-ai/cohere-go/v2/client"
@@ -44,6 +45,15 @@ const (
 	RerankModel  = "rerank"
 )
 
+// Allowed values for embeddingTypes.
+var allowedEmbeddingTypes = map[string]bool{
+	"float":   true,
+	"int8":    true,
+	"uint8":   true,
+	"binary":  true,
+	"ubinary": true,
+}
+
 type ProcessorConfig struct {
 	// Model is one of the Cohere model (command,embed,rerank).
 	Model string `json:"model" validate:"required" default:"command"`
@@ -61,6 +71,46 @@ type ProcessorConfig struct {
 	BackoffRetryMax time.Duration `json:"backoffRetry.max" default:"5s"`
 	// Specifies in which field should the response body be saved.
 	ResponseBodyRef string `json:"response.body" validate:"required" default:".Payload.After"`
+
+	// Embed-specific configurations
+	EmbedConfig *EmbedConfig `json:"embedConfig"`
+}
+
+type EmbedConfig struct {
+	// Specifies the type of input passed to the model. Required for embedding models v3 and higher.
+	InputType string `json:"inputType" validate:"inclusion=search_document|search_query|classification|clustering|image"`
+	// Specifies the types of embeddings you want to get back. Can be one or more of the allowed types.
+	EmbeddingTypes []string `json:"embeddingTypes"`
+	// Handles input exceeding max token length: START trims from the beginning, END from the end, NONE returns an error.
+	Truncate string `json:"truncate" default:"NONE" validate:"inclusion=NONE|START|END"`
+}
+
+// Validate executes manual validations beyond what is defined in struct tags.
+func (c ProcessorConfig) Validate() error {
+	// validate `embedConfig` if model is "embed".
+	if c.Model == EmbedModel {
+		if c.EmbedConfig == nil {
+			return fmt.Errorf("embedConfig is required when model is 'embed'")
+		}
+
+		if len(c.EmbedConfig.EmbeddingTypes) == 0 {
+			return fmt.Errorf("atleast one embeddingType must be provided")
+		}
+
+		// validate `inputType` for v3 models.
+		if strings.Contains(c.ModelVersion, "v3") && c.EmbedConfig.InputType == "" {
+			return fmt.Errorf("inputType required for embedding models v3 and higher")
+		}
+
+		// validate each `embeddingType`.
+		for _, et := range c.EmbedConfig.EmbeddingTypes {
+			if _, ok := allowedEmbeddingTypes[et]; !ok {
+				return fmt.Errorf("invalid embeddingType: %s. Allowed values: float, int8, uint8, binary, ubinary", et)
+			}
+		}
+	}
+
+	return nil
 }
 
 func NewProcessor() sdk.Processor {
@@ -77,6 +127,11 @@ func (p *Processor) Configure(ctx context.Context, cfg config.Config) error {
 	err := sdk.ParseConfig(ctx, cfg, &p.config, ProcessorConfig{}.Parameters())
 	if err != nil {
 		return fmt.Errorf("failed to parse configuration: %w", err)
+	}
+
+	err = p.config.Validate()
+	if err != nil {
+		return fmt.Errorf("error validating configuration: %w", err)
 	}
 
 	responseBodyRef, err := sdk.NewReferenceResolver(p.config.ResponseBodyRef)
@@ -136,4 +191,22 @@ func (p *Processor) Process(ctx context.Context, records []opencdc.Record) []sdk
 	}
 
 	return processedRecords
+}
+
+func (p *Processor) setField(r *opencdc.Record, refRes *sdk.ReferenceResolver, data any) error {
+	if refRes == nil {
+		return nil
+	}
+
+	ref, err := refRes.Resolve(r)
+	if err != nil {
+		return fmt.Errorf("error reference resolver: %w", err)
+	}
+
+	err = ref.Set(data)
+	if err != nil {
+		return fmt.Errorf("error reference set: %w", err)
+	}
+
+	return nil
 }

@@ -16,11 +16,77 @@ package cohere
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"time"
 
+	cohere "github.com/cohere-ai/cohere-go/v2"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
 )
 
-func (p *Processor) processEmbedModel(_ context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
-	return make([]sdk.ProcessedRecord, len(records))
+func (p *Processor) processEmbedModel(ctx context.Context, records []opencdc.Record) []sdk.ProcessedRecord {
+	out := make([]sdk.ProcessedRecord, 0, len(records))
+	for _, record := range records {
+		for {
+			resp, err := p.client.V2.Embed(
+				ctx,
+				&cohere.V2EmbedRequest{
+					Model:          p.config.ModelVersion,
+					Texts:          []string{string(record.Payload.After.Bytes())},
+					InputType:      cohere.EmbedInputType(p.config.EmbedConfig.InputType),
+					EmbeddingTypes: p.getEmbeddingTypes(),
+				},
+			)
+			attempt := p.backoffCfg.Attempt()
+			duration := p.backoffCfg.Duration()
+			if err != nil {
+				switch {
+				case errors.As(err, &cohere.GatewayTimeoutError{}),
+					errors.As(err, &cohere.InternalServerError{}),
+					errors.As(err, &cohere.ServiceUnavailableError{}):
+
+					if attempt < p.config.BackoffRetryCount {
+						sdk.Logger(ctx).Debug().
+							Err(err).
+							Float64("attempt", attempt).
+							Float64("backoffRetry.count", p.config.BackoffRetryCount).
+							Int64("backoffRetry.duration", duration.Milliseconds()).
+							Msg("retrying Cohere HTTP request")
+
+						select {
+						case <-ctx.Done():
+							return append(out, sdk.ErrorRecord{Error: ctx.Err()})
+						case <-time.After(duration):
+							continue
+						}
+					} else {
+						return append(out, sdk.ErrorRecord{Error: err})
+					}
+
+				default:
+					// BadRequestError, ClientClosedRequestError, ForbiddenError, InvalidTokenError,
+					// NotFoundError, NotImplementedError, TooManyRequestsError, UnauthorizedError, UnprocessableEntityError
+					return append(out, sdk.ErrorRecord{Error: err})
+				}
+			}
+
+			p.backoffCfg.Reset() // reset for next processor execution
+
+			err = p.setField(&record, p.responseBodyRef, resp.GetEmbeddings())
+			if err != nil {
+				return append(out, sdk.ErrorRecord{Error: fmt.Errorf("failed setting response body: %w", err)})
+			}
+			out = append(out, sdk.SingleRecord(record))
+		}
+	}
+	return out
+}
+
+func (p *Processor) getEmbeddingTypes() []cohere.EmbeddingType {
+	embeddingTypes := make([]cohere.EmbeddingType, 0)
+	for _, et := range p.config.EmbedConfig.EmbeddingTypes {
+		embeddingTypes = append(embeddingTypes, cohere.EmbeddingType(et))
+	}
+	return embeddingTypes
 }
