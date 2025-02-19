@@ -46,9 +46,9 @@ const (
 
 type ProcessorConfig struct {
 	// Model is one of the Cohere model (command,embed,rerank).
-	Model string `json:"model" validate:"required" default:"command"`
+	Model string `json:"model" default:"command"`
 	// ModelVersion is version of one of the models (command,embed,rerank).
-	ModelVersion string `json:"modelVersion" validate:"required" default:"command"`
+	ModelVersion string `json:"modelVersion"  default:"command"`
 	// APIKey is the API key for Cohere api calls.
 	APIKey string `json:"apiKey" validate:"required"`
 	// Maximum number of retries for an individual record when backing off following an error.
@@ -60,7 +60,7 @@ type ProcessorConfig struct {
 	// The maximum waiting time before retrying.
 	BackoffRetryMax time.Duration `json:"backoffRetry.max" default:"5s"`
 	// Specifies in which field should the response body be saved.
-	ResponseBodyRef string `json:"response.body" validate:"required" default:".Payload.After"`
+	ResponseBodyRef string `json:"response.body" default:".Payload.After"`
 }
 
 func NewProcessor() sdk.Processor {

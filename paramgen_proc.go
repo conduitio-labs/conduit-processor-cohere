@@ -60,25 +60,19 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 			Default:     "command",
 			Description: "Model is one of the Cohere model (command,embed,rerank).",
 			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
+			Validations: []config.Validation{},
 		},
 		ProcessorConfigModelVersion: {
 			Default:     "command",
 			Description: "ModelVersion is version of one of the models (command,embed,rerank).",
 			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
+			Validations: []config.Validation{},
 		},
 		ProcessorConfigResponseBody: {
 			Default:     ".Payload.After",
 			Description: "Specifies in which field should the response body be saved.",
 			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
+			Validations: []config.Validation{},
 		},
 	}
 }

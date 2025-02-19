@@ -10,6 +10,7 @@ require (
 	github.com/conduitio/conduit-processor-sdk v0.4.1
 	github.com/golangci/golangci-lint v1.64.5
 	github.com/jpillora/backoff v1.0.0
+	github.com/matryer/is v1.4.1
 	mvdan.cc/gofumpt v0.7.0
 )
 
