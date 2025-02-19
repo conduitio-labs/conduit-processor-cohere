@@ -60,7 +60,7 @@ type ProcessorConfig struct {
 	// The maximum waiting time before retrying.
 	BackoffRetryMax time.Duration `json:"backoffRetry.max" default:"5s"`
 	// Specifies in which field should the response body be saved.
-	ResponseBodyRef string `json:"response.body" default:".Payload.After"`
+	ResponseBodyRef string `json:"response.body" validate:"required" default:".Payload.After"`
 }
 
 func NewProcessor() sdk.Processor {

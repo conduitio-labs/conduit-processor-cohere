@@ -9,7 +9,13 @@ Conduit processor for Cohere's models.
 | name                     | description                              | required | default value |
 |--------------------------|------------------------------------------|----------|---------------|
 | `model` | Model is one of the Cohere model (command,embed,rerank) | true     | "command"            |
+| `modelVersion` | ModelVersion is version of one of the models (command,embed,rerank). | true     |     "command"        |
 | `apiKey` | APIKey is apikey for Cohere api calls. | true     |             |
+| `response.body` | Specifies in which field should the response body be saved. | true     |     `.Payload.After`        |
+| `backoffRetry.count` |Maximum number of retries for an individual record when backing off following an error. | false     |        `0`     |
+| `backoffRetry.factor` | The multiplying factor for each increment step. | false     |     `2`        |
+| `backoffRetry.min` | The minimum waiting time before retrying. | false     |     `100ms`        |
+| `backoffRetry.max` | The maximum waiting time before retrying. | false     |    `5s`         |
 
 
 ## References

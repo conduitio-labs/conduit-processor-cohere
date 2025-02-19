@@ -76,7 +76,9 @@ func (ProcessorConfig) Parameters() map[string]config.Parameter {
 			Default:     ".Payload.After",
 			Description: "Specifies in which field should the response body be saved.",
 			Type:        config.ParameterTypeString,
-			Validations: []config.Validation{},
+			Validations: []config.Validation{
+				config.ValidationRequired{},
+			},
 		},
 	}
 }
