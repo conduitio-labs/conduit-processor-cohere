@@ -8,14 +8,17 @@ Conduit processor for Cohere's models.
 
 | name                     | description                              | required | default value |
 |--------------------------|------------------------------------------|----------|---------------|
-| `model` | Model is one of the Cohere model (command,embed,rerank) | true     | "command"            |
-| `modelVersion` | ModelVersion is version of one of the models (command,embed,rerank). | true     |     "command"        |
+| `model` | Model is one of the Cohere model (command,embed,rerank) | false     | "command"            |
+| `modelVersion` | ModelVersion is version of one of the models (command,embed,rerank). | false     |     "command"        |
 | `apiKey` | APIKey is apikey for Cohere api calls. | true     |             |
-| `response.body` | Specifies in which field should the response body be saved. | true     |     `.Payload.After`        |
+| `response.body` | Specifies in which field should the response body be saved. | false     |     `.Payload.After`        |
 | `backoffRetry.count` |Maximum number of retries for an individual record when backing off following an error. | false     |        `0`     |
 | `backoffRetry.factor` | The multiplying factor for each increment step. | false     |     `2`        |
 | `backoffRetry.min` | The minimum waiting time before retrying. | false     |     `100ms`        |
 | `backoffRetry.max` | The maximum waiting time before retrying. | false     |    `5s`         |
+| `embedConfig.inputType` | Specifies the type of input passed to the embed model. [See more.](https://docs.cohere.com/reference/embed#request.body.input_type) | only when model is "embed" and modelVersion is "v3" or higher    |             |
+| `embedConfig.embeddingTypes` | Specifies the types of embeddings to return. [See more.](https://docs.cohere.com/reference/embed#request.body.embedding_types) | only when model is "embed"    |             |
+
 
 
 ## References

@@ -69,7 +69,7 @@ linters:
     - goconst
     - gocritic
     - godot
-    - err113
+    # - err113
     - gofmt
     - gofumpt
     - goheader

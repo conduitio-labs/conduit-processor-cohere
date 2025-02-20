@@ -29,15 +29,16 @@ func (p *Processor) processEmbedModel(ctx context.Context, records []opencdc.Rec
 	out := make([]sdk.ProcessedRecord, 0, len(records))
 	for _, record := range records {
 		for {
-			resp, err := p.client.V2.Embed(
-				ctx,
-				&cohere.V2EmbedRequest{
-					Model:          p.config.ModelVersion,
-					Texts:          []string{string(record.Payload.After.Bytes())},
-					InputType:      cohere.EmbedInputType(p.config.EmbedConfig.InputType),
-					EmbeddingTypes: p.getEmbeddingTypes(),
-				},
-			)
+			req := &cohere.V2EmbedRequest{
+				Model:          p.config.ModelVersion,
+				Texts:          []string{string(record.Payload.After.Bytes())},
+				EmbeddingTypes: p.getEmbeddingTypes(),
+			}
+			if p.config.EmbedConfig.InputType != "" {
+				req.InputType = cohere.EmbedInputType(p.config.EmbedConfig.InputType)
+			}
+
+			resp, err := p.client.V2.Embed(ctx, req)
 			attempt := p.backoffCfg.Attempt()
 			duration := p.backoffCfg.Duration()
 			if err != nil {
@@ -84,7 +85,7 @@ func (p *Processor) processEmbedModel(ctx context.Context, records []opencdc.Rec
 }
 
 func (p *Processor) getEmbeddingTypes() []cohere.EmbeddingType {
-	embeddingTypes := make([]cohere.EmbeddingType, 0)
+	embeddingTypes := []cohere.EmbeddingType{}
 	for _, et := range p.config.EmbedConfig.EmbeddingTypes {
 		embeddingTypes = append(embeddingTypes, cohere.EmbeddingType(et))
 	}
