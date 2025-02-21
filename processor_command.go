@@ -21,6 +21,7 @@ import (
 	"time"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
+	cohereClient "github.com/cohere-ai/cohere-go/v2/client"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-processor-sdk"
 )
@@ -42,6 +43,7 @@ func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.R
 						},
 					},
 				},
+				cohereClient.WithToken(p.config.APIKey),
 			)
 			attempt := p.backoffCfg.Attempt()
 			duration := p.backoffCfg.Duration()
@@ -52,9 +54,7 @@ func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.R
 					errors.As(err, &cohere.ServiceUnavailableError{}):
 
 					if attempt < p.config.BackoffRetryCount {
-						sdk.Logger(ctx).Debug().
-							Err(err).
-							Float64("attempt", attempt).
+						sdk.Logger(ctx).Debug().Err(err).Float64("attempt", attempt).
 							Float64("backoffRetry.count", p.config.BackoffRetryCount).
 							Int64("backoffRetry.duration", duration.Milliseconds()).
 							Msg("retrying Cohere HTTP request")
@@ -86,6 +86,7 @@ func (p *Processor) processCommandModel(ctx context.Context, records []opencdc.R
 				return append(out, sdk.ErrorRecord{Error: fmt.Errorf("failed setting response body: %w", err)})
 			}
 			out = append(out, sdk.SingleRecord(record))
+			break
 		}
 	}
 	return out
